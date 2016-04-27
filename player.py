@@ -14,6 +14,8 @@ class Player(pygame.sprite.Sprite):
     time = 0
     boost_timer = 8
     platform_list = None
+    collect_list = None
+    box_list = None
 
     num_jumps = 0
     jumping = False
@@ -140,6 +142,14 @@ class Player(pygame.sprite.Sprite):
 
         # Move up/down
         self.rect.y += self.change_y
+
+        collect_hit_list = pygame.sprite.spritecollide(self, self.collect_list, True)
+
+        if self.boosting:
+            box_hit_list = pygame.sprite.spritecollide(self, self.box_list, True)
+        else:
+            box_hit_list = pygame.sprite.spritecollide(self, self.box_list, False)
+
 
         block_hit_list = pygame.sprite.spritecollide(self, self.platform_list, False)
         for block in block_hit_list:
