@@ -152,6 +152,7 @@ class Player(pygame.sprite.Sprite):
                 box_hit_list = pygame.sprite.spritecollide(self, self.box_list, True)
                 if len(box_hit_list) > 0:
                     self.explode_sound.play()
+                    pygame.time.set_timer(USEREVENT+2, 1)
             else:
                 box_hit_list = pygame.sprite.spritecollide(self, self.box_list, False)
                 if len(box_hit_list) > 0:

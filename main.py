@@ -6,6 +6,21 @@ from pygames_infinite_runner.collectables import Collectable
 from pygames_infinite_runner.player import Player
 import pygames_infinite_runner.constants as constants
 from pygame.locals import *
+from itertools import repeat
+
+offset = repeat((0, 0))
+
+
+def shake():
+    s = -1
+    for _ in range(0, 3):
+        for x in range(0, 20, 5):
+            yield (0, x*s)
+        for x in range(20, 0, 5):
+            yield (0, x*s)
+        s *= -1
+    while True:
+        yield (0, 0)
 
 
 def main():
@@ -16,7 +31,10 @@ def main():
     fps_clock = pygame.time.Clock()
 
     window_size = (constants.SCREEN_WIDTH, constants.SCREEN_HEIGHT)
-    SURFACE = pygame.display.set_mode(window_size)
+
+    org_screen = pygame.display.set_mode(window_size)
+    SURFACE = org_screen.copy()
+    surface_rect = SURFACE.get_rect()
 
     pygame.display.set_caption("Drawing with PyGame")
 
@@ -43,8 +61,14 @@ def main():
                 done = True
             if event.type == USEREVENT+1 and boost_timer > 0:
                 boost_timer -= 1
+                pygame.time.set_timer(USEREVENT+1, 0)
             if event.type == USEREVENT+0:
                 plat_move_speed = 0
+                pygame.time.set_timer(USEREVENT+0, 0)
+            if event.type == USEREVENT+2:
+                global offset
+                offset = shake()
+                pygame.time.set_timer(USEREVENT+2, 0)
 
             if event.type == KEYDOWN:
                 if event.key == K_z:
@@ -75,7 +99,7 @@ def main():
             if item.rect.x == constants.SCREEN_WIDTH and (item.has_collect == 1 or item.has_collect == 2):
                 collect_list.add(Collectable(item.rect.x + item.size + 400, item.rect.y-210))
             if item.rect.x == constants.SCREEN_WIDTH and (item.has_box == 1 or item.has_box == 2):
-                box_list.add(Box(item.rect.x + item.size/2, item.rect.y-80))
+                box_list.add(Box(item.rect.x + item.size/2, item.rect.y-71))
             item.move(plat_move_speed)
             if item.rect.x + (item.x_mult*50) < 30 and not item.checkpoint:
                 platform_list.add(Platforms(800, 500))
@@ -85,6 +109,7 @@ def main():
 
         for box in box_list:
             box.move(plat_move_speed)
+            box.update()
             if box.rect.x + 80 < 0:
                 box_list.remove(box)
 
@@ -93,6 +118,7 @@ def main():
             if collect.rect.x + 10 < 0:
                 collect_list.remove(collect)
 
+        org_screen.blit(SURFACE, next(offset))
         pygame.display.flip()
         fps_clock.tick(fps)
 
