@@ -1,6 +1,7 @@
 import pygame
 from pygames_infinite_runner.spritesheet_functions import SpriteSheet
 import pygames_infinite_runner.constants as constants
+from pygame.locals import *
 
 
 class Player(pygame.sprite.Sprite):
@@ -12,7 +13,7 @@ class Player(pygame.sprite.Sprite):
     charge_frames = []
     fire_frames = []
     time = 0
-    boost_timer = 8
+    boost_timer = 10
     platform_list = None
     collect_list = None
     box_list = None
@@ -21,6 +22,8 @@ class Player(pygame.sprite.Sprite):
     jumping = False
     falling = False
     boosting = False
+
+    dead = False
 
     # -- Methods
     def __init__(self, x, y):
@@ -31,23 +34,6 @@ class Player(pygame.sprite.Sprite):
         # Call the parent's constructor
         pygame.sprite.Sprite.__init__(self)
 
-        """sprite_sheet = SpriteSheet("p1_walk.png")
-        # Load all the right facing images into a list
-        image = sprite_sheet.get_image(0, 0, 66, 90)
-        self.walking_frames_r.append(image)
-        image = sprite_sheet.get_image(66, 0, 66, 90)
-        self.walking_frames_r.append(image)
-        image = sprite_sheet.get_image(132, 0, 67, 90)
-        self.walking_frames_r.append(image)
-        image = sprite_sheet.get_image(0, 93, 66, 90)
-        self.walking_frames_r.append(image)
-        image = sprite_sheet.get_image(66, 93, 66, 90)
-        self.walking_frames_r.append(image)
-        image = sprite_sheet.get_image(132, 93, 72, 90)
-        self.walking_frames_r.append(image)
-        image = sprite_sheet.get_image(0, 186, 70, 90)
-        self.walking_frames_r.append(image)
-        """
         sprite_sheet = SpriteSheet("sprite_walk.png")
         image = sprite_sheet.get_image(0, 0, 40, 60)
         self.walking_frames_r.append(image)
@@ -104,71 +90,93 @@ class Player(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+        self.jump_sound = pygame.mixer.Sound('sfx/jump.ogg')
+        self.jump_sound.set_volume(.5)
+        self.collect_sound = pygame.mixer.Sound('sfx/collect.ogg')
+        self.collect_sound.set_volume(.5)
+        self.explode_sound = pygame.mixer.Sound('sfx/explode.ogg')
+        self.explode_sound.set_volume(.5)
+        self.powerup_sound = pygame.mixer.Sound('sfx/powerup.ogg')
+        self.powerup_sound.set_volume(.5)
+        self.walk_sound = pygame.mixer.Sound('sfx/walk.ogg')
+
     def update(self):
-        self.calc_gravity()
-        self.time += .25
+        if not self.dead:
+            self.calc_gravity()
+            self.time += .25
 
-        if self.time % 2 == 0:
-            if self.curr_img >= len(self.walking_frames_r)-1:
-                self.curr_img = 0
+            if self.time % 2 == 0:
+                if self.curr_img >= len(self.walking_frames_r)-1:
+                    self.curr_img = 0
+                else:
+                    self.curr_img += 1
+
+            if self.time * 4 % 2 == 0:
+                if self.curr_boost_img >= len(self.charge_frames)-1:
+                    self.curr_boost_img = 0
+                else:
+                    self.curr_boost_img += 1
+                if self.curr_fire_frame >= len(self.fire_frames)-1:
+                    self.curr_fire_frame = 0
+                else:
+                    self.curr_fire_frame += 1
+
+            if self.time/3 % 2 == 0:
+                if not self.jumping and not self.falling and not self.boosting:
+                    self.walk_sound.play()
+
+            if self.jumping:
+                self.image = self.jumping_sprite
+            elif self.falling:
+                self.image = self.falling_sprite
             else:
-                self.curr_img += 1
+                self.image = self.walking_frames_r[self.curr_img]
 
-        if self.time * 4 % 2 == 0:
-            if self.curr_boost_img >= len(self.charge_frames)-1:
-                self.curr_boost_img = 0
+            if self.boosting:
+                self.image = self.charge_frames[self.curr_boost_img]
+
+            if self.boosting:
+                self.boost_timer -= 0.5
+            if self.boost_timer < 0:
+                self.boosting = False
+                self.boost_timer = 10
+
+            # Move up/down
+            self.rect.y += self.change_y
+
+            collect_hit_list = pygame.sprite.spritecollide(self, self.collect_list, True)
+            if len(collect_hit_list) > 0:
+                self.collect_sound.play()
+
+            if self.boosting:
+                box_hit_list = pygame.sprite.spritecollide(self, self.box_list, True)
+                if len(box_hit_list) > 0:
+                    self.explode_sound.play()
             else:
-                self.curr_boost_img += 1
-            if self.curr_fire_frame >= len(self.fire_frames)-1:
-                self.curr_fire_frame = 0
-            else:
-                self.curr_fire_frame += 1
+                box_hit_list = pygame.sprite.spritecollide(self, self.box_list, False)
+                if len(box_hit_list) > 0:
+                    self.explode_sound.play()
+                    self.dead = True
+                    pygame.time.set_timer(USEREVENT+0, 1)
 
-        if self.jumping:
-            self.image = self.jumping_sprite
-        elif self.falling:
-            self.image = self.falling_sprite
-        else:
-            self.image = self.walking_frames_r[self.curr_img]
+            block_hit_list = pygame.sprite.spritecollide(self, self.platform_list, False)
+            for block in block_hit_list:
+                # Reset our position based on the top/bottom of the object.
+                if self.change_y > 0:
+                    self.rect.bottom = block.rect.top
+                elif self.change_y < 0:
+                    self.rect.top = block.rect.bottom
 
-        if self.boosting:
-            self.image = self.charge_frames[self.curr_boost_img]
+                # Stop our vertical movement
+                self.change_y = 0
 
-        if self.boosting:
-            self.boost_timer -= 0.5
-        if self.boost_timer < 0:
-            self.boosting = False
-            self.boost_timer = 8
+                self.num_jumps = 0
+                self.jumping = False
+                self.falling = False
 
-        # Move up/down
-        self.rect.y += self.change_y
-
-        collect_hit_list = pygame.sprite.spritecollide(self, self.collect_list, True)
-
-        if self.boosting:
-            box_hit_list = pygame.sprite.spritecollide(self, self.box_list, True)
-        else:
-            box_hit_list = pygame.sprite.spritecollide(self, self.box_list, False)
-
-
-        block_hit_list = pygame.sprite.spritecollide(self, self.platform_list, False)
-        for block in block_hit_list:
-            # Reset our position based on the top/bottom of the object.
             if self.change_y > 0:
-                self.rect.bottom = block.rect.top
-            elif self.change_y < 0:
-                self.rect.top = block.rect.bottom
-
-            # Stop our vertical movement
-            self.change_y = 0
-
-            self.num_jumps = 0
-            self.jumping = False
-            self.falling = False
-
-        if self.change_y > 0:
-            self.falling = True
-            self.jumping = False
+                self.falling = True
+                self.jumping = False
 
     def draw(self, screen):
         if self.boosting:
@@ -203,12 +211,14 @@ class Player(pygame.sprite.Sprite):
             self.jumping = False
             self.falling = False
 
-        if self.num_jumps < 2:
+        if self.num_jumps < 2 and not self.dead:
+            self.jump_sound.play()
             self.num_jumps += 1
             self.change_y = -10
             self.curr_img = 0
             self.jumping = True
 
     def boost(self):
-        if not self.boosting:
+        if not self.boosting and not self.dead:
             self.boosting = True
+            self.powerup_sound.play()

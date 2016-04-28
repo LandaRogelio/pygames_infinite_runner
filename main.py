@@ -9,7 +9,7 @@ from pygame.locals import *
 
 
 def main():
-
+    pygame.mixer.pre_init(44100, -16, 1, 512)
     pygame.init()
 
     fps = 60
@@ -43,6 +43,8 @@ def main():
                 done = True
             if event.type == USEREVENT+1 and boost_timer > 0:
                 boost_timer -= 1
+            if event.type == USEREVENT+0:
+                plat_move_speed = 0
 
             if event.type == KEYDOWN:
                 if event.key == K_z:
