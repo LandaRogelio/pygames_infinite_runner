@@ -2,13 +2,14 @@ import pygame
 from pygames_infinite_runner.spritesheet_functions import SpriteSheet
 import pygames_infinite_runner.constants as constants
 from pygame.locals import *
+import math
 
 
 class Player(pygame.sprite.Sprite):
     # -- Attributes
     # Set speed vector of player
     change_y = 0
-
+    gravity = 0.25
     walking_frames_r = []
     charge_frames = []
     fire_frames = []
@@ -24,6 +25,9 @@ class Player(pygame.sprite.Sprite):
     boosting = False
 
     dead = False
+
+    score = 0
+    mult = 1
 
     # -- Methods
     def __init__(self, x, y):
@@ -100,9 +104,10 @@ class Player(pygame.sprite.Sprite):
         self.powerup_sound.set_volume(.5)
         self.walk_sound = pygame.mixer.Sound('sfx/walk.ogg')
 
-    def update(self):
+    def update(self, mult):
         if not self.dead:
             self.calc_gravity()
+            self.mult = mult
             self.time += .25
 
             if self.time % 2 == 0:
@@ -147,11 +152,14 @@ class Player(pygame.sprite.Sprite):
             collect_hit_list = pygame.sprite.spritecollide(self, self.collect_list, True)
             if len(collect_hit_list) > 0:
                 self.collect_sound.play()
+                self.score += 10 * self.mult
+                pygame.time.set_timer(USEREVENT+3, 1)
 
             if self.boosting:
                 box_hit_list = pygame.sprite.spritecollide(self, self.box_list, True)
                 if len(box_hit_list) > 0:
                     self.explode_sound.play()
+                    self.score += 20 * self.mult
                     pygame.time.set_timer(USEREVENT+2, 1)
             else:
                 box_hit_list = pygame.sprite.spritecollide(self, self.box_list, False)
@@ -190,7 +198,7 @@ class Player(pygame.sprite.Sprite):
         if self.change_y == 0:
             self.change_y = 1
         else:
-            self.change_y += .25
+            self.change_y += self.gravity
 
         # See if we are on the ground.
         if self.rect.y >= constants.SCREEN_HEIGHT - self.rect.height and self.change_y >= 0:
