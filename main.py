@@ -2,6 +2,7 @@ import pygame
 import sys
 from pygames_infinite_runner.platforms import Platforms
 from pygames_infinite_runner.boxes import Box
+from pygames_infinite_runner.ghosts import Ghost
 from pygames_infinite_runner.collectables import Collectable
 from pygames_infinite_runner.player import Player
 import pygames_infinite_runner.constants as constants
@@ -42,7 +43,7 @@ def main():
     pygame.mixer.music.set_endevent(USEREVENT + 4)
     pygame.mixer.music.play()
 
-    pygame.display.set_caption("Drawing with PyGame")
+    pygame.display.set_caption("Infinite Runner")
 
     mana_font = pygame.font.Font('fonts/manaspc.ttf', 30)
     sm_mana_font = pygame.font.Font('fonts/manaspc.ttf', 20)
@@ -56,6 +57,7 @@ def main():
     platform_list.add(Platforms(10, 500))
     box_list = pygame.sprite.Group()
     collect_list = pygame.sprite.Group()
+    ghost_list = pygame.sprite.Group()
     plat_move_speed = 6
     plat_move_mult = 1
 
@@ -93,13 +95,16 @@ def main():
             if event.type == USEREVENT + 5:
                 pygame.time.set_timer(USEREVENT+5, 0)
                 add_points = 0
+            if event.type == USEREVENT + 6:
+                pygame.time.set_timer(USEREVENT+6, 0)
+                player.can_boost = True
 
             if event.type == KEYDOWN:
                 if event.key == K_z:
                     player.jump()
                 if event.key == K_x:
                     player.boost()
-                    if boost_timer < 0:
+                    if boost_timer < 0 and player.can_boost:
                         pygame.time.set_timer(USEREVENT+1, 400)
                         boost_timer = 1
                         plat_move_mult = 2
@@ -110,6 +115,7 @@ def main():
         player.platform_list = platform_list
         player.collect_list = collect_list
         player.box_list = box_list
+        player.ghost_list = ghost_list
         player.update(mult)
 
         if boost_timer == 0:
@@ -119,12 +125,15 @@ def main():
         platform_list.draw(SURFACE)
         box_list.draw(SURFACE)
         collect_list.draw(SURFACE)
+        ghost_list.draw(SURFACE)
 
         for item in platform_list:
             if item.rect.x == constants.SCREEN_WIDTH and (item.has_collect == 1 or item.has_collect == 2):
                 collect_list.add(Collectable(item.rect.x + item.size + 400, item.rect.y-210))
             if item.rect.x == constants.SCREEN_WIDTH and (item.has_box == 1 or item.has_box == 2):
                 box_list.add(Box(item.rect.x + item.size/2, item.rect.y-71, random.randint(0, 1)))
+            if item.rect.x == constants.SCREEN_WIDTH and mult >= 8 and item.has_ghost != 0:
+                ghost_list.add(Ghost(item.rect.x + item.size - 70, item.rect.y-48))
             item.move(plat_move_speed)
             if item.rect.x + (item.x_mult*50) < 30 and not item.checkpoint:
                 platform_list.add(Platforms(800, 500))
@@ -142,6 +151,12 @@ def main():
             collect.move(plat_move_speed)
             if collect.rect.x + 10 < 0:
                 collect_list.remove(collect)
+
+        for ghost in ghost_list:
+            ghost.move(plat_move_speed)
+            ghost.update()
+            if ghost.rect.x + 48 < 0:
+                ghost_list.remove(ghost)
 
         time_passed = fps_clock.tick(fps)
         time_passed_seconds = time_passed / 1000.0
@@ -190,10 +205,14 @@ def main():
             mult = 1.5
             if boost_timer < 0:
                 player.score += time_passed_seconds * 3
-        elif 9.0 > time > 0.0:
+        elif 10.0 > time > 0.0 and not lose:
             plat_move_speed = 6 * plat_move_mult
             if boost_timer < 0:
                 player.score += time_passed_seconds * 2
+
+        if not player.can_boost:
+            spooked_render = sm_mana_font.render('SPOOKED', False, (255, 255, 255))
+            SURFACE.blit(spooked_render, (player.rect.x - 20, player.rect.y + 20))
 
         if add_points != 0:
             SURFACE.blit(point_render, (player.rect.x + 15, player.rect.y - 30))

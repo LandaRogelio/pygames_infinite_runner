@@ -18,11 +18,13 @@ class Player(pygame.sprite.Sprite):
     platform_list = None
     collect_list = None
     box_list = None
+    ghost_list = None
 
     num_jumps = 0
     jumping = False
     falling = False
     boosting = False
+    can_boost = True
 
     dead = False
 
@@ -155,12 +157,18 @@ class Player(pygame.sprite.Sprite):
                 self.score += 10 * self.mult
                 pygame.time.set_timer(USEREVENT+3, 1)
 
+            ghost_hit_list = pygame.sprite.spritecollide(self, self.ghost_list, True)
+            if len(ghost_hit_list) > 0:
+                self.can_boost = False
+                pygame.time.set_timer(USEREVENT+6, 2000)
+
             if self.boosting:
                 box_hit_list = pygame.sprite.spritecollide(self, self.box_list, True)
                 if len(box_hit_list) > 0:
                     self.explode_sound.play()
                     self.score += 20 * self.mult
                     pygame.time.set_timer(USEREVENT+2, 1)
+
             else:
                 box_hit_list = pygame.sprite.spritecollide(self, self.box_list, False)
                 if len(box_hit_list) > 0:
@@ -183,6 +191,11 @@ class Player(pygame.sprite.Sprite):
                 self.jumping = False
                 self.falling = False
 
+            if self.rect.y >= constants.SCREEN_HEIGHT + self.rect.height and self.change_y >= 0:
+                self.explode_sound.play()
+                self.dead = True
+                pygame.time.set_timer(USEREVENT+0, 1)
+
             if self.change_y > 0:
                 self.falling = True
                 self.jumping = False
@@ -199,11 +212,6 @@ class Player(pygame.sprite.Sprite):
             self.change_y = 1
         else:
             self.change_y += self.gravity
-
-        # See if we are on the ground.
-        if self.rect.y >= constants.SCREEN_HEIGHT - self.rect.height and self.change_y >= 0:
-            self.change_y = 0
-            self.rect.y = constants.SCREEN_HEIGHT - self.rect.height
 
     def jump(self):
         """ Called when user hits 'jump' button. """
@@ -228,6 +236,6 @@ class Player(pygame.sprite.Sprite):
             self.jumping = True
 
     def boost(self):
-        if not self.boosting and not self.dead:
+        if not self.boosting and not self.dead and self.can_boost:
             self.boosting = True
             self.powerup_sound.play()

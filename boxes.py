@@ -1,5 +1,4 @@
 import pygame
-import random
 from pygames_infinite_runner.spritesheet_functions import SpriteSheet
 
 
@@ -109,3 +108,5 @@ class Box(pygame.sprite.Sprite):
             self.image = self.stance_frames[self.curr_frame]
         elif self.choose == 1:
             self.image = self.eye_frames[self.curr_frame]
+
+

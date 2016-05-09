@@ -19,6 +19,7 @@ class Platforms(pygame.sprite.Sprite):
         self.rect.x = x
         self.has_box = random.randint(0, 2)
         self.has_collect = random.randint(0, 2)
+        self.has_ghost = random.randint(0, 2)
         self.size = self.image.get_width()
         self.checkpoint = False
 
