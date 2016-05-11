@@ -11,8 +11,9 @@ class Platforms(pygame.sprite.Sprite):
         g = random.randint(0, 255)
         b = random.randint(0, 255)
         self.image = pygame.Surface([self.x_mult*50, 400])
-        self.image.fill(pygame.Color(r, g, b))
+        self.image.fill(pygame.Color(255, 255, 255))
         self.rect = self.image.get_rect()
+        self.image.fill(pygame.Color(r, g, b), self.rect.inflate(-5, -5))
         self.x = x
         self.y = y * random.uniform(0.4, 1.0)
         self.rect.y = y * random.uniform(0.4, 1.0)
