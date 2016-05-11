@@ -2,7 +2,7 @@ import pygame
 from pygames_infinite_runner.spritesheet_functions import SpriteSheet
 
 
-class Box(pygame.sprite.Sprite):
+class Enemy(pygame.sprite.Sprite):
     stance_frames = []
     eye_frames = []
     time = 0

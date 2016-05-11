@@ -1,7 +1,7 @@
 import pygame
 import sys
 from pygames_infinite_runner.platforms import Platforms
-from pygames_infinite_runner.enemies import Box
+from pygames_infinite_runner.enemies import Enemy
 from pygames_infinite_runner.ghosts import Ghost
 from pygames_infinite_runner.collectables import Collectable
 from pygames_infinite_runner.player import Player
@@ -61,7 +61,7 @@ def main():
     cloud_list = pygame.sprite.Group()
     cloud_list.add(Cloud())
     cloud_list.add(Cloud())
-    box_list = pygame.sprite.Group()
+    enemy_list = pygame.sprite.Group()
     collect_list = pygame.sprite.Group()
     ghost_list = pygame.sprite.Group()
     plat_move_speed = 6
@@ -133,7 +133,7 @@ def main():
             player.draw(SURFACE)
             player.platform_list = platform_list
             player.collect_list = collect_list
-            player.box_list = box_list
+            player.enemy_list = enemy_list
             player.ghost_list = ghost_list
             player.update(mult)
 
@@ -143,7 +143,7 @@ def main():
 
             cloud_list.draw(SURFACE)
             platform_list.draw(SURFACE)
-            box_list.draw(SURFACE)
+            enemy_list.draw(SURFACE)
             collect_list.draw(SURFACE)
             ghost_list.draw(SURFACE)
 
@@ -156,8 +156,8 @@ def main():
             for item in platform_list:
                 if item.rect.x == constants.SCREEN_WIDTH and (item.has_collect == 1 or item.has_collect == 2):
                     collect_list.add(Collectable(item.rect.x + item.size + 400, item.rect.y-210))
-                if item.rect.x == constants.SCREEN_WIDTH and (item.has_box == 1 or item.has_box == 2):
-                    box_list.add(Box(item.rect.x + item.size/2, item.rect.y-71, random.randint(0, 1)))
+                if item.rect.x == constants.SCREEN_WIDTH and (item.has_enemy == 1 or item.has_enemy == 2):
+                    enemy_list.add(Enemy(item.rect.x + item.size/2, item.rect.y-71, random.randint(0, 1)))
                 if item.rect.x == constants.SCREEN_WIDTH and mult >= 8 and item.has_ghost != 0:
                     ghost_list.add(Ghost(item.rect.x + item.size - 70, item.rect.y-48))
                 item.move(plat_move_speed)
@@ -167,11 +167,11 @@ def main():
                 if item.rect.x + (item.x_mult*50) < 0:
                     platform_list.remove(item)
 
-            for box in box_list:
-                box.move(plat_move_speed)
-                box.update()
-                if box.rect.x + 80 < 0:
-                    box_list.remove(box)
+            for enemy in enemy_list:
+                enemy.move(plat_move_speed)
+                enemy.update()
+                if enemy.rect.x + 80 < 0:
+                    enemy_list.remove(enemy)
 
             for collect in collect_list:
                 collect.move(plat_move_speed)

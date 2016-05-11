@@ -17,7 +17,7 @@ class Player(pygame.sprite.Sprite):
     boost_timer = 10
     platform_list = None
     collect_list = None
-    box_list = None
+    enemy_list = None
     ghost_list = None
 
     num_jumps = 0
@@ -163,15 +163,15 @@ class Player(pygame.sprite.Sprite):
                 pygame.time.set_timer(USEREVENT+6, 2000)
 
             if self.boosting:
-                box_hit_list = pygame.sprite.spritecollide(self, self.box_list, True)
-                if len(box_hit_list) > 0:
+                enemy_hit_list = pygame.sprite.spritecollide(self, self.enemy_list, True)
+                if len(enemy_hit_list) > 0:
                     self.explode_sound.play()
                     self.score += 20 * self.mult
                     pygame.time.set_timer(USEREVENT+2, 1)
 
             else:
-                box_hit_list = pygame.sprite.spritecollide(self, self.box_list, False)
-                if len(box_hit_list) > 0:
+                enemy_hit_list = pygame.sprite.spritecollide(self, self.enemy_list, False)
+                if len(enemy_hit_list) > 0:
                     self.explode_sound.play()
                     self.dead = True
                     pygame.time.set_timer(USEREVENT+0, 1)
