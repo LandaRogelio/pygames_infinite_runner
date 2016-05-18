@@ -108,5 +108,3 @@ class Enemy(pygame.sprite.Sprite):
             self.image = self.stance_frames[self.curr_frame]
         elif self.choose == 1:
             self.image = self.eye_frames[self.curr_frame]
-
-

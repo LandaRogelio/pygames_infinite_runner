@@ -168,7 +168,6 @@ class Player(pygame.sprite.Sprite):
                     self.explode_sound.play()
                     self.score += 20 * self.mult
                     pygame.time.set_timer(USEREVENT+2, 1)
-
             else:
                 enemy_hit_list = pygame.sprite.spritecollide(self, self.enemy_list, False)
                 if len(enemy_hit_list) > 0:

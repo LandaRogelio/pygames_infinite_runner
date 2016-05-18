@@ -1,5 +1,4 @@
 import pygame
-import sys
 from pygames_infinite_runner.platforms import Platforms
 from pygames_infinite_runner.enemies import Enemy
 from pygames_infinite_runner.ghosts import Ghost
@@ -119,6 +118,24 @@ def main():
                     bg_color.debug()
                 if event.key == K_SPACE and menu:
                     menu = False
+                if event.key == K_r and lose:
+                    menu = True
+                    lose = False
+                    time = 0
+                    mult = 1
+                    add_points = 0
+                    boost_timer = -1
+                    plat_move_speed = 6
+                    plat_move_mult = 1
+                    player = Player(50, 210)
+                    platform_list = pygame.sprite.Group()
+                    platform_list.add(Platforms(10, 500))
+                    cloud_list = pygame.sprite.Group()
+                    cloud_list.add(Cloud())
+                    cloud_list.add(Cloud())
+                    enemy_list = pygame.sprite.Group()
+                    collect_list = pygame.sprite.Group()
+                    ghost_list = pygame.sprite.Group()
 
         bg_color.update()
         SURFACE.fill(bg_color.curr_color)
@@ -193,6 +210,7 @@ def main():
             mult_render = sm_mana_font.render('X' + str(mult), False, (255, 255, 255))
             time_render = mana_font.render(str(math.floor(time)), False, (255, 255, 255))
             point_render = sm_mana_font.render('+' + str(math.floor(add_points)), False, (255, 255, 255))
+            restart_render = sm_mana_font.render('Press R to restart', False, (255, 255, 255))
 
             if time > 90.0 and not lose:
                 if plat_move_mult == 2:
@@ -245,6 +263,8 @@ def main():
             SURFACE.blit(score_render, (constants.SCREEN_WIDTH/2, 20))
             if mult != 1:
                 SURFACE.blit(mult_render, (constants.SCREEN_WIDTH/2, 50))
+            if lose:
+                SURFACE.blit(restart_render, (constants.SCREEN_WIDTH/2 - 100, 100))
             SURFACE.blit(time_render, (20, 20))
 
         org_screen.blit(SURFACE, next(offset))
