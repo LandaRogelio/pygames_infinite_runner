@@ -7,6 +7,7 @@ from pygames_infinite_runner.player import Player
 import pygames_infinite_runner.constants as constants
 from pygames_infinite_runner.background import Background
 from pygames_infinite_runner.background import Cloud
+from pygames_infinite_runner.score_board import Score
 from pygame.locals import *
 from itertools import repeat
 import math
@@ -55,6 +56,8 @@ def main():
     player = Player(50, 210)
     player.draw(SURFACE)
 
+    score_board = Score(SURFACE)
+
     platform_list = pygame.sprite.Group()
     platform_list.add(Platforms(10, 500))
     cloud_list = pygame.sprite.Group()
@@ -70,6 +73,7 @@ def main():
     boost_timer = -1
     done = False
     lose = False
+    score_check = False
     menu = True
     time = 0
     mult = 1
@@ -121,6 +125,7 @@ def main():
                 if event.key == K_r and lose:
                     menu = True
                     lose = False
+                    score_check = False
                     time = 0
                     mult = 1
                     add_points = 0
@@ -136,15 +141,70 @@ def main():
                     enemy_list = pygame.sprite.Group()
                     collect_list = pygame.sprite.Group()
                     ghost_list = pygame.sprite.Group()
+                if event.key == K_RIGHT and score_board.name:
+                    score_board.collect_sound.play()
+                    if score_board.sqr_curr_pos in range(9):
+                        if score_board.sqr_curr_pos == 8:
+                            score_board.sqr_curr_pos = 0
+                        else:
+                            score_board.sqr_curr_pos += 1
+                    elif score_board.sqr_curr_pos in range(9, 18):
+                        if score_board.sqr_curr_pos == 17:
+                            score_board.sqr_curr_pos = 9
+                        else:
+                            score_board.sqr_curr_pos += 1
+                    elif score_board.sqr_curr_pos in range(18, 27):
+                        if score_board.sqr_curr_pos == 26:
+                            score_board.sqr_curr_pos = 18
+                        else:
+                            score_board.sqr_curr_pos += 1
+                if event.key == K_LEFT and score_board.name:
+                    score_board.collect_sound.play()
+                    if score_board.sqr_curr_pos in range(9):
+                        if score_board.sqr_curr_pos == 0:
+                            score_board.sqr_curr_pos = 8
+                        else:
+                            score_board.sqr_curr_pos -= 1
+                    elif score_board.sqr_curr_pos in range(9, 18):
+                        if score_board.sqr_curr_pos == 9:
+                            score_board.sqr_curr_pos = 17
+                        else:
+                            score_board.sqr_curr_pos -= 1
+                    elif score_board.sqr_curr_pos in range(18, 27):
+                        if score_board.sqr_curr_pos == 18:
+                            score_board.sqr_curr_pos = 26
+                        else:
+                            score_board.sqr_curr_pos -= 1
+                if event.key == K_DOWN and score_board.name:
+                    score_board.collect_sound.play()
+                    if score_board.sqr_curr_pos in range(18, 27):
+                        score_board.sqr_curr_pos -= 18
+                    else:
+                        score_board.sqr_curr_pos += 9
+                if event.key == K_UP and score_board.name:
+                    score_board.collect_sound.play()
+                    if score_board.sqr_curr_pos in range(9):
+                        score_board.sqr_curr_pos += 18
+                    else:
+                        score_board.sqr_curr_pos -= 9
+
+                if event.key == K_RETURN and score_board.name:
+                    score_board.enter_letter()
 
         bg_color.update()
         SURFACE.fill(bg_color.curr_color)
+        if lose:
+            SURFACE.fill([0, 0, 0])
+            if not score_check:
+                score_board.check(player.score)
+                score_check = True
 
         if menu:
             title_render = mana_font.render('Infinite Runner', False, (255, 255, 255))
             instruction_render = sm_mana_font.render('Press SPACE to begin', False, (255, 255, 255))
             SURFACE.blit(title_render, (constants.SCREEN_WIDTH/2 - 150, constants.SCREEN_HEIGHT-500))
-            SURFACE.blit(instruction_render, (constants.SCREEN_WIDTH/2 - 150, constants.SCREEN_HEIGHT-100))
+            SURFACE.blit(instruction_render, (constants.SCREEN_WIDTH/2 - 140, constants.SCREEN_HEIGHT-100))
+            score_board.draw(SURFACE)
 
         else:
             player.draw(SURFACE)
@@ -266,6 +326,9 @@ def main():
             if lose:
                 SURFACE.blit(restart_render, (constants.SCREEN_WIDTH/2 - 100, 100))
             SURFACE.blit(time_render, (20, 20))
+
+        if score_board.name:
+            score_board.input_name()
 
         org_screen.blit(SURFACE, next(offset))
         pygame.display.flip()
